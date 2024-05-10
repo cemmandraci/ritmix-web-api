@@ -1,0 +1,6 @@
+@RitmiX_HostAddress = http://localhost:5143
+
+GET {{RitmiX_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
