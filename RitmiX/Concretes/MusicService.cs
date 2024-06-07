@@ -3,6 +3,7 @@ using RitmiX.Data;
 using RitmiX.Entities;
 using RitmiX.Extensions;
 using RitmiX.Models;
+using System.Formats.Tar;
 
 namespace RitmiX.Concretes
 {
@@ -17,42 +18,50 @@ namespace RitmiX.Concretes
 
         public async Task<MusicResponseModel> GetMetadata(IFormFile file)
         {
-            using var memoryStream = new MemoryStream();
-            await file.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
 
-            var fileAbstraction = new StreamFileAbstraction(file.FileName, memoryStream, memoryStream);
-            var tagFile = TagLib.File.Create(fileAbstraction);
+            byte[] fileData = File.ReadAllBytes(file.FileName);
 
-            var metadata = new AudioMetadata()
+            using (MemoryStream memoryStream = new MemoryStream(fileData))
             {
-                Title = tagFile.Tag.Title,
-                Artists = tagFile.Tag.Performers,
-                Album = tagFile.Tag.Album,
-                Genres = tagFile.Tag.Genres
-            };
-            
+                // StreamFileAbstraction oluştur
+                var abstraction = new StreamFileAbstraction(file.FileName, memoryStream);
+                var fileN = TagLib.File.Create(abstraction);
+                //    await file.CopyToAsync(memoryStream);
+                //   memoryStream.Position = 0; 
+                var metadata = new AudioMetadata()
+                {
+                    Title = fileN.Tag.Title,
+                    Artists = fileN.Tag.Performers,
+                    Album = fileN.Tag.Album,
+                    Genres = fileN.Tag.Genres
+                };
+                var music = new Music()
+                {
+                    Name = metadata.Title ?? file.FileName,
+                    Mp4File = memoryStream.ToArray(),
+                };
+
+                _context.Musics.Add(music);
+                await _context.SaveChangesAsync();
+
+                var responseMusic = new MusicResponseModel()
+                {
+                    Id = music.Id,
+                    Name = music.Name,
+                    Mp4File = music.Mp4File,
+                    SingerName = "deneme"
+                };
+                return responseMusic;
+            }
+
+
+
             //artist kontorlü yapmak gerek
             //kategori kontrolü yapmak gerek
 
-            var music = new Music()
-            {
-                Name = metadata.Title ?? file.FileName,
-                Mp4File = memoryStream.ToArray(),
-            };
 
-            _context.Musics.Add(music);
-            await _context.SaveChangesAsync();
 
-            var responseMusic = new MusicResponseModel()
-            {
-                Id = music.Id,
-                Name = music.Name,
-                Mp4File = music.Mp4File,
-                SingerName = "deneme"
-            };
 
-            return responseMusic;
         }
     }
 }
