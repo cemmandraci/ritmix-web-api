@@ -2,15 +2,15 @@
 
 public class StreamFileAbstraction : TagLib.File.IFileAbstraction
 {
-    public StreamFileAbstraction(string name, Stream readStream, Stream writeStream)
+    public StreamFileAbstraction(string name, Stream stream)
     {
         Name = name;
-        ReadStream = readStream;
-        WriteStream = writeStream;
+        ReadStream = stream;
+        WriteStream = stream;
     }
     public void CloseStream(Stream stream)
     {
-        //
+        stream.Close();
     }
 
     public string Name { get; }
